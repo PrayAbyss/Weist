@@ -7,6 +7,8 @@ import zlib
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
+from weist_spider_project.utils.tools import httpx_request
+
 proxies = {
     'http': 'http://127.0.0.1:7890',
     'https': 'http://127.0.0.1:7890',
@@ -45,59 +47,6 @@ def decrypt_from_app(api_str, encrypt_text):
 
 
 # ======= 通用函数 =======
-
-def httpx_request(
-        url,
-        extract: list = None,
-        extract_type: str = "json",
-        attempts: int = 3,
-        method: str = "get",
-        check_status_code: bool = True,
-        base_delay: int | float = 0,
-        **rk
-) -> dict | str | list | Exception:
-    """ httpx 定制
-
-    :param url: 网址
-    :param extract: 提取路径列表， 当提取类型为json时生效
-    :param extract_type: 提取类型
-    :param attempts: 尝试次数
-    :param method: 请求类型
-    :param check_status_code: 检查响应状态码，如果直接获取结果可以关闭
-    :param base_delay: 退避算法延迟基数
-    :param rk: 请求参数
-    :return: 返回提取内容
-    :raise: 所有尝试失败后，自动抛出异常
-    """
-    from httpx import request as hr
-    from time import sleep
-    exception = f"[HTTPX_REQUEST] method({method}) url({url}) failed: "
-    for attempt in range(attempts):
-        try:
-            response = hr(method, url, **rk)
-            response.raise_for_status() if check_status_code else None
-            if extract_type == "json":
-                return (func := lambda i, ex: func(i[ex.pop(0)], ex) if ex else i)(response.json(), extract)
-            elif extract_type == "text":
-                return response.text
-            elif extract_type == "response":
-                return response  # noqa
-            else:
-                exception += f"exception(extract_type[{extract_type}] not support)"
-                break
-        except KeyError as e:
-            exception += f" extract({extract}) exception key({e})" if str(e) not in exception else ""
-            break
-        except IndexError as e:
-            exception += f" extract({extract}) exception index({e})" if str(e) not in exception else ""
-            break
-        except Exception as e:
-            e_ = str(e).replace("\n", "").strip()[:100]
-            exception += f" exception({e_})" if e_ not in exception else ""
-        delay = base_delay ** (attempt + 1)
-        sleep(delay)
-    raise Exception(exception)  # noqa
-
 
 def get_trading_pair(keyword):
     headers = {
