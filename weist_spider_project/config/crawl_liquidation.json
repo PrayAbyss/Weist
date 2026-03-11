@@ -1,0 +1,141 @@
+{
+  "liquidation_map": {
+    "function": "LiquidationMap",
+    "function_path": "/spiders/liquidation/liquidation_map.py",
+    "log_usage": false,
+    "extra_params": {
+      "sem": 3,
+      "domin": "https://gas.cg-app-api.com",
+      "exchanges": [
+        "binance"
+      ],
+      "tra_pairs": [
+        "Binance_BTCUSDT"
+      ],
+      "time_interval": [
+        "1d"
+      ]
+    },
+    "proxy_setting": {
+      "agent": "cli_proxy",
+      "regions": [
+        "US"
+      ]
+    }
+  },
+  "liquidation_map_ex": {
+    "function": "LiquidationMapEx",
+    "function_path": "/spiders/liquidation/liquidation_map_ex.py",
+    "log_usage": false,
+    "extra_params": {
+      "sem": 3,
+      "domin": "https://gas.cg-app-api.com",
+      "currencies": [
+        "BTC"
+      ],
+      "time_interval": [
+        "1d"
+      ]
+    },
+    "proxy_setting": {
+      "agent": "cli_proxy",
+      "regions": [
+        "US"
+      ]
+    }
+  },
+  "liq_heat_map_currency_model_1": {
+    "function": "LiqHeatMapCurrencyModel1",
+    "function_path": "/spiders/liquidation/liq_heat_map_currency_model_1.py",
+    "log_usage": false,
+    "upload_slice": 2,
+    "extra_params": {
+      "sem": 3,
+      "domin": "https://gas.cg-app-api.com",
+      "currencies": [
+        "BTC"
+      ],
+      "time_interval": [
+        "1d"
+      ]
+    },
+    "proxy_setting": {
+      "agent": "cli_proxy",
+      "regions": [
+        "US"
+      ]
+    }
+  },
+  "liq_heat_map_currency_model_2": {
+    "function": "LiqHeatMapCurrencyModel2",
+    "function_path": "/spiders/liquidation/liq_heat_map_currency_model_2.py",
+    "log_usage": false,
+    "upload_slice": 2,
+    "extra_params": {
+      "sem": 3,
+      "domin": "https://gas.cg-app-api.com",
+      "currencies": [
+        "BTC"
+      ],
+      "time_interval": [
+        "1d"
+      ]
+    },
+    "proxy_setting": {
+      "agent": "cli_proxy",
+      "regions": [
+        "US"
+      ]
+    }
+  },
+  "liq_heat_map_tra_pair_model_1": {
+    "function": "LiqHeatMapTraPairModel1",
+    "function_path": "/spiders/liquidation/liq_heat_map_tra_pair_model_1.py",
+    "log_usage": false,
+    "upload_slice": 2,
+    "extra_params": {
+      "sem": 3,
+      "domin": "https://gas.cg-app-api.com",
+      "exchanges": [
+        "binance"
+      ],
+      "time_interval": [
+        "1d"
+      ],
+      "tra_pairs": [
+        "Binance_BTCUSDT"
+      ]
+    },
+    "proxy_setting": {
+      "agent": "cli_proxy",
+      "regions": [
+        "US"
+      ]
+    }
+  },
+  "liq_heat_map_tra_pair_model_2": {
+    "function": "LiqHeatMapTraPairModel2",
+    "function_path": "/spiders/liquidation/liq_heat_map_tra_pair_model_2.py",
+    "log_usage": false,
+    "upload_slice": 2,
+    "extra_params": {
+      "sem": 3,
+      "domin": "https://gas.cg-app-api.com",
+      "exchanges": [
+        "binance"
+      ],
+      "time_interval": [
+        "1d"
+      ],
+      "tra_pairs": [
+        "Binance_BTCUSDT"
+      ]
+    },
+    "proxy_setting": {
+      "agent": "cli_proxy",
+      "regions": [
+        "US"
+      ]
+    }
+  }
+}

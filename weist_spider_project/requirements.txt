@@ -1,0 +1,5 @@
+rocketmq-python-client==5.0.6
+curl_cffi==0.10.0
+httpx==0.28.1
+mysql-connector-python==9.3.0
+pandas==2.2.3

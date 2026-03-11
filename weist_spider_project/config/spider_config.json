@@ -1,0 +1,56 @@
+{
+  "crawl_liquidation": {
+    "env": "test",
+    "upload_to": "",
+    "init_upload": "",
+    "use_topic": true,
+    "generator_mode": true,
+    "async_tasks": [
+      "liquidation_map",
+      "liquidation_map_ex",
+      "liq_heat_map_currency_model_1",
+      "liq_heat_map_currency_model_2",
+      "liq_heat_map_tra_pair_model_1",
+      "liq_heat_map_tra_pair_model_2"
+    ],
+    "check_spider_status": [
+      "env",
+      "upload_to",
+      "init_upload",
+      "use_topic"
+    ],
+    "mq_settings": {
+      "enable": false,
+      "auto_create": true,
+      "endpoints": {
+        "local": "***.***.***.***:****",
+        "test": "***.***.***.***:****",
+        "prod": "***.***.***.***:****"
+      },
+      "topic": "topic_*************",
+      "topic_format": "",
+      "topics": {
+        "liquidation_map": "topic_*************",
+        "liquidation_map_ex": "topic_*************",
+        "liq_heat_map_currency_model_1": "topic_*************",
+        "liq_heat_map_tra_pair_model_1": "topic_*************",
+        "liq_heat_map_currency_model_2": "topic_*************",
+        "liq_heat_map_tra_pair_model_2": "topic_*************"
+      }
+    },
+    "cli_proxy": {
+      "username": "********",
+      "password": "********",
+      "host": "********",
+      "port": 1000
+    },
+    "slack_setting": {
+      "enable": false,
+      "filter_level": "good",
+      "url": "https://hooks.slack.com/services/*****/*****/*****",
+      "attachment_setting": {
+        "author_name": "@weist"
+      }
+    }
+  }
+}
