@@ -1,10 +1,9 @@
 import os
-import sys
+
 from utils.core import Dispatcher
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-# print(BASE_PATH)
-# sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+
 
 class CrawlLiquidation(Dispatcher):
     name = "crawl_liquidation"
