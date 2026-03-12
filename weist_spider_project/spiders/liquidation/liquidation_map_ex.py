@@ -40,7 +40,8 @@ class LiquidationMapEx(AsyncSpider):
     # ======================脚本代码=========================
 
     async def fetch_all_exchange_currencies(self):
-        self.currencies.extend(self.extra_params.get("currencies") or get_currencies())
+        self.currencies.extend(
+            self.extra_params.get("currencies") or get_currencies(self.proxies["http"] if self.proxies else None))
 
     async def init_params_batch(self):
         time_interval = self.extra_params.get("time_interval", ["1d", "7d", "30d"])
@@ -97,7 +98,7 @@ class LiquidationMapEx(AsyncSpider):
             return rk
 
     async def fetch_batch(self):
-        proxy = self.proxies["http"] if self.proxies["http"] else None
+        proxy = self.proxies["http"] if self.proxies else None
         async with AsyncClient(proxy=proxy, headers=self.headers, ) as client:
             tasks = [
                 asyncio.create_task(

@@ -1,6 +1,5 @@
 import base64
 import json
-import platform
 import urllib.parse
 import zlib
 
@@ -8,12 +7,6 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
 from weist_spider_project.utils.tools import httpx_request
-
-proxies = {
-    'http': 'http://127.0.0.1:7890',
-    'https': 'http://127.0.0.1:7890',
-} if platform.system() == 'Windows' else None
-proxy = proxies["http"] if proxies else None
 
 
 # ======= 解密函数 =======
@@ -48,7 +41,7 @@ def decrypt_from_app(api_str, encrypt_text):
 
 # ======= 通用函数 =======
 
-def get_trading_pair(keyword):
+def get_trading_pair(keyword, proxy=None):
     headers = {
         "User-Agent": "vivo/V2344A",
         "Accept-Encoding": "gzip",
@@ -76,7 +69,7 @@ def get_trading_pair(keyword):
     return trading_pairs
 
 
-def get_currencies():
+def get_currencies(proxy=None):
     headers = {
         "User-Agent": "vivo/V2344A",
         "Accept-Encoding": "gzip",

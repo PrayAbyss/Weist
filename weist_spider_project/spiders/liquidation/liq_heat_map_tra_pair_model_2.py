@@ -85,7 +85,7 @@ class LiqHeatMapTraPairModel2(AsyncSpider):
     async def fetch_all_exchange_trading_pairs(self):
         exchanges = self.extra_params.get("exchanges", [])
         for exchange in exchanges:
-            exchange_tra_pairs = get_trading_pair(exchange)
+            exchange_tra_pairs = get_trading_pair(exchange, self.proxies["http"] if self.proxies else None)
             if tra_pairs := self.extra_params.get("tra_pairs"):
                 for tra_pair in tra_pairs:
                     for etp in exchange_tra_pairs:
@@ -154,7 +154,7 @@ class LiqHeatMapTraPairModel2(AsyncSpider):
             return rk
 
     async def fetch_batch(self):
-        proxy = self.proxies["http"] if self.proxies["http"] else None
+        proxy = self.proxies["http"] if self.proxies else None
         async with AsyncClient(proxy=proxy, headers=self.headers) as client:
             tasks = [
                 asyncio.create_task(
