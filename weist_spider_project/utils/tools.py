@@ -7,8 +7,12 @@
 import io
 import os
 import zipfile
+from asyncio import Semaphore, sleep as asyncio_sleep
+from time import sleep
 
 import requests
+from curl_cffi import request as cr
+from httpx import request as hr, stream as hs, AsyncClient
 
 
 class SpiderMode:
@@ -24,8 +28,8 @@ def httpx_request(
         attempts: int = 3,
         method: str = "get",
         check_status_code: bool = True,
-        base_delay: int | float = 0,
         check_text: bool = False,
+        base_delay: int | float = 0,
         **rk
 ) -> dict | str | list:
     """ httpx 定制
@@ -36,32 +40,32 @@ def httpx_request(
     :param attempts: 尝试次数
     :param method: 请求类型
     :param check_status_code: 检查响应状态码，如果直接获取结果可以关闭
+    :param check_text: 查看响应文本
     :param base_delay: 退避算法延迟基数
     :param rk: 请求参数
     :return: 返回提取内容
     :raise: 所有尝试失败后，自动抛出异常
     """
-    from httpx import request as hr
-    from time import sleep
-    exception = f"[HTTPX_REQUEST] method({method}) url({url}) failed:"
+
+    exception = f"[HTTPX_REQUEST] Method({method}) Url({url[:100]}) failed: "
     exception_count = {}
+    last_lst = []
     for attempt in range(attempts):
         try:
             response = hr(method, url, **rk)
             print(response.text.replace("\n", "")) if check_text else None
             response.raise_for_status() if check_status_code else None
             if extract_type == "json":
-                return (func := lambda i, ex: func(i[ex.pop(0)], ex) if ex else i)(response.json(), extract)
+                return (
+                    func := lambda i, ex, ll: func(i[ll.append(ki := ex.pop(0)) or ki], ex, ll) if ex else i
+                )(response.json(), extract, last_lst)
             elif extract_type == "text":
                 return response.text
             else:
-                exception += f"exception([{extract_type}] not support)"
+                exception += f"Exception([{extract_type}] not support)"
                 break
-        except KeyError as e:
-            exception += f" extract({extract}) exception key({e})" if str(e) not in exception else ""
-            break
-        except IndexError as e:
-            exception += f" extract({extract}) exception index({e})" if str(e) not in exception else ""
+        except (KeyError, IndexError) as e:
+            exception += f"ExtractList({extract}) Current Key/Index({last_lst[-1]}) Exception({e})"
             break
         except Exception as e:
             e_ = str(e).replace("\n", "").strip()[:100]
@@ -69,11 +73,85 @@ def httpx_request(
                 exception_count[e_] = 1
             else:
                 exception_count[e_] += 1
-            # exception += f" exception({e_})" if e_ not in exception else ""
         delay = base_delay ** (attempt + 1)
         sleep(delay)
-    exception += ", ".join([f"{k} -> {v}" for k, v in exception_count.items()])
+    exception += ", ".join([f"Exception({k} -> {v})" for k, v in exception_count.items()])
     raise Exception(exception)
+
+
+async def httpx_client(
+        client: AsyncClient,
+        sem: Semaphore,
+        extract: list = None,
+        extract_type: str = "json",
+        attempts: int = 3,
+        check_status_code: bool = True,
+        check_text: bool = False,
+        base_delay: int | float = 0,
+        **rk
+) -> dict:
+    """ 异步请求
+    响应返回rk是为了标识是哪个请求，以免并发过程丢失失败请求。
+    :param client: AsyncClient，httpx的异步客户端
+    :param sem: 限定并发
+    :param extract: 提取列表
+    :param extract_type: 提取类型
+    :param attempts: 尝试此时
+    :param check_status_code: 检查响应码
+    :param check_text: 检查响应文本
+    :param base_delay: 基础延迟
+    :param rk: 请求参数
+    :return: rk,响应结果在rk的"_result"字段中
+    """
+    exception = f"[HTTPX_CLIENT] Method({rk.get('method')}) Url({rk.get('url', '')[:100]}) failed: "
+    exception_count = {}
+    last_lst = []
+    async with sem:
+        for attempt in range(attempts):
+            try:
+                response = await client.request(**rk)
+                print(response.text.replace("\n", "")) if check_text else None
+                response.raise_for_status() if check_status_code else None
+                if extract_type == "json":
+                    return rk.setdefault(
+                        "_result",
+                        (
+                            func := lambda i, ex, ll: func(i[ll.append(ki := ex.pop(0)) or ki], ex, ll) if ex else i
+                        )(response.json(), extract, last_lst)
+                    )
+                elif extract_type == "text":
+                    return rk.setdefault("_result", response.text)
+                else:
+                    exception += f"Exception([{extract_type}] not support)"
+                    break
+            except (KeyError, IndexError) as e:
+                exception += f"ExtractList({extract}) Current Key/Index({last_lst[-1]}) Exception({e})"
+                break
+            except Exception as e:
+                e_ = str(e).replace("\n", "").strip()[:100]
+                if exception_count.get(e_) is None:
+                    exception_count[e_] = 1
+                else:
+                    exception_count[e_] += 1
+            delay = base_delay ** (attempt + 1)
+            await asyncio_sleep(delay)
+        exception += ", ".join([f"Exception({k} -> {v})" for k, v in exception_count.items()])
+        raise Exception(exception)
+
+
+def httpx_stream(url: str, file_path: str, **rk):
+    headers = {}
+    mode = "wb"
+    # 如果文件存在，尝试断点续传
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    with hs("GET", url, headers=headers, timeout=None, **rk) as r:
+        r.raise_for_status()
+        with open(file_path, mode) as f:
+            for chunk in r.iter_bytes(81920):
+                if chunk:
+                    f.write(chunk)
+    return file_path
 
 
 def curl_request(
@@ -99,36 +177,41 @@ def curl_request(
     :return: 返回提取内容
     :raise: 所有尝试失败后，自动抛出异常
     """
-    from curl_cffi import request as cr
-    from time import sleep
-    exception = f"[CURL_REQUEST] method({method}) url({url}) failed:"
+
+    exception = f"[CURL_REQUEST] Method({method}) Url({url[:100]}) failed: "
+    exception_count = {}
+    last_lst = []
     for attempt in range(attempts):
         try:
             response = cr(method, url, **rk)  # noqa
             response.raise_for_status() if check_status_code else None
             if extract_type == "json":
-                return (func := lambda i, ex: func(i[ex.pop(0)], ex) if ex else i)(response.json(), extract)
+                return (
+                    func := lambda i, ex, ll: func(i[ll.append(ki := ex.pop(0)) or ki], ex, ll) if ex else i
+                )(response.json(), extract, last_lst)
             elif extract_type == "text":
                 return response.text
             else:
-                exception += f"exception([{extract_type}] not support)"
+                exception += f"Exception([{extract_type}] not support)"
                 break
-        except KeyError as e:
-            exception += f" extract({extract}) exception({e})" if str(e) not in exception else ""
-            break
-        except IndexError as e:
-            exception += f" extract({extract}) exception({e})" if str(e) not in exception else ""
+        except (KeyError, IndexError) as e:
+            exception += f" Extract({extract}) Current Key/Index({last_lst[-1]}) ({e})" if str(
+                e) not in exception else ""
             break
         except Exception as e:
             e_ = str(e).replace("\n", "").strip()[:100]
-            exception += f" exception({e_})" if e_ not in exception else ""
+            if exception_count.get(e_) is None:
+                exception_count[e_] = 1
+            else:
+                exception_count[e_] += 1
         delay = base_delay ** (attempt + 1)
         sleep(delay)
+    exception += ", ".join([f"Exception({k} -> {v})" for k, v in exception_count.items()])
     raise Exception(exception)
 
 
 def fetch_proxies_from_qg(
-        spider_mode: str = SpiderMode.Local,
+        spider_mode: str = "local",
         source: int = 0,
         check: bool = True,
         attempts: int = 11,
