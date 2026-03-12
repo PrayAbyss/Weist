@@ -8,7 +8,7 @@ import mysql.connector
 from mysql.connector import Error
 
 
-class DatabaseConnect:
+class MysqlDB:
 
     def __init__(self, *args, **kwargs):
         self.commit = kwargs.get('commit', False)
